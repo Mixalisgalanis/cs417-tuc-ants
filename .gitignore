@@ -1,6 +1,11 @@
 # Prerequisites
 *.d
 
+# Executable files
+client
+server
+
+
 # Object files
 *.o
 *.ko
