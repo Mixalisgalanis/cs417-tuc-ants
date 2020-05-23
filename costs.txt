@@ -1,0 +1,53 @@
+For minimax to work, we first have to represent our movements to a graph with costs.
+
+For each round there is a subtree containing every possible movement from any ant. 
+Each action has a specific point. 
+
+Below we assign each movement type to a specific point sorted by priority (coming soon):
+
+================================== points =================================
+0.  no movement available                           :   0 points
+1.  1 vertical movement towards enemy goal          :   1 points
+2.  1 jump                                          :   4 points (2 for vertical movement + 2 for one enemy ant loss)
+3.  1 vertical movement to reach end                :   5 points (1 for vertical movement + 4 for increasing score)
+4.  1 jump + reach end                              :   8 points (4 for 1 jump + 4 for increasing score)
+5.  1 vertical movement towards food                :   3 points (1 for vertical movement + 2 for 50% chance to increase score)
+6.  1 jump + food                                   :   6 points (4 for 1 jump + 2 for 50% chance to increase score)
+==========================================================================
+
+
+food : 3 points
+jump : 2 points
+reach end : 5 points
+movement : 1 point*
+no movement : 0 points
+
+for each consequtive jump : += # jumps * 2
+
+1 jump = 2
+2 jumps = 2 + 4 = 6
+3 jumps = 2 + 4 + 
+
+EXAMPLES:
+
+dialemma 1 :     jump + food (7)    OR       reach end (5)          = jump + food
+dialemma 2 :     jump + jump (8)    OR       reach end (5)          = jump + jump
+dialemma 3 :        food (3)        OR       jump (4)               = jump
+
+
+---------------------
+
+lost ant : - 1 point
+killed ant : + 1 point
+increased score : + 3 points (50% increased score : + 1.5 points)
+// opponent lost roun (jump) : + 1 point
+
+
+food = 1.5 point
+jump = 1
+reach end = 2
+
+
+dialemma 1 :     jump + food (2.5)    OR       reach end (2)    = jump + food
+dialemma 2 :     jump + jump (2)    OR       reach end (2)      = tie
+dialemma 3 :        food (1.5)        OR       jump (1)         = food
