@@ -18,5 +18,11 @@ board: board.c board.h move.h global.h
 gameServer: gameServer.c gameServer.h board.h move.h global.h
 	gcc -c gameServer.c -O3
 
+custom_server: server
+	./server -p 6001
+
+custom_client: client
+	./client -i 127.0.0.1 -p 6001
+
 clean:
 	rm -f *.o client server guiServer

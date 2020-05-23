@@ -8,7 +8,7 @@
 /* Struct to store Move and color of the player */
 typedef struct
 {
-	char tile[ 2 ][ MAXIMUM_MOVE_SIZE ];	
+	char tile[ 2 ][ MAXIMUM_MOVE_SIZE ];
 	char color;
 } Move;
 /**********************************************************/

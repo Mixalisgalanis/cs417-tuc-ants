@@ -25,6 +25,7 @@
 
 /**********************************************************/
 #define MAXIMUM_MOVE_SIZE 6
+#define MAX_ANTS 12
 
 /* The size of our board */
 #define BOARD_COLUMNS 8
@@ -44,5 +45,7 @@
 //default port for client and server
 #define DEFAULT_PORT "6001"
 
+//define infinity numbers
+#define INFINITY 2147483647
 
 #endif
