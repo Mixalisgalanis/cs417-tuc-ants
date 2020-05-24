@@ -120,7 +120,7 @@ void test(){
 */
 
 /*
-/* ******************* TESTING IMPLEMENTATION OF LIST ******************
+                // ******************* TESTING IMPLEMENTATION OF LIST ******************
                 //We want to store Move structs
                 List *list = createList();
                 //construct_List(&container, sizeof(Move), FREEOBJ);
@@ -133,8 +133,8 @@ void test(){
                 firstMove.tile[1][1] = 1;
                 firstMove.tile[0][2] = -1;
                 firstMove.color = WHITE;
+                addItemToList(list, &firstMove);
 
-                addToList(&firstMove, list);
                 // Inserting second move
                 Move secondMove;
                 secondMove.tile[0][0] = 2;
@@ -143,7 +143,7 @@ void test(){
                 secondMove.tile[1][1] = 2;
                 secondMove.tile[0][2] = -1;
                 secondMove.color = WHITE;
-                addToList(&secondMove, list);
+                addItemToList(list, &secondMove);
 
                 Move thirdMove;
                 thirdMove.tile[0][0] = 7;
@@ -152,9 +152,17 @@ void test(){
                 thirdMove.tile[1][1] = 4;
                 thirdMove.tile[0][2] = -1;
                 thirdMove.color = WHITE;
-                addToList(&thirdMove, list);
-
-                removeFromList(list);
+                addItemToList(list, &thirdMove);
+                
+                // Inserting first move
+                Move fourthMove;
+                fourthMove.tile[0][0] = 1;
+                fourthMove.tile[1][0] = 0;
+                fourthMove.tile[0][1] = 6;
+                fourthMove.tile[1][1] = 6;
+                fourthMove.tile[0][2] = -1;
+                fourthMove.color = WHITE;
+                addItemToList(list, &fourthMove);
 
                 // Print info about first two moves
                 if (!isEmpty(list)){
@@ -165,5 +173,5 @@ void test(){
                     }
                 }
 
-                /* ******************* END OF TESTING *******************
+                // ******************* END OF TESTING *******************
 */
