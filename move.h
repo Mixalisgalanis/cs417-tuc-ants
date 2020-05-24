@@ -4,15 +4,24 @@
 #include "global.h"
 
 /**********************************************************/
-
+typedef struct ListNodes ListNode;
 /* Struct to store Move and color of the player */
-typedef struct
-{
+typedef struct{
 	char tile[ 2 ][ MAXIMUM_MOVE_SIZE ];
 	char color;
 } Move;
 /**********************************************************/
 
+struct ListNodes{
+    Move *data;
+    ListNode *next;
+} ;
+
+typedef struct{
+    ListNode *front;
+    ListNode *rear;
+    unsigned int length;
+} List;
 
 /*
 Caution!

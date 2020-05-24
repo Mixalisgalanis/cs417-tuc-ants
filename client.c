@@ -6,8 +6,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
-#include "c-generic-library/list.h"
-
 
 /**********************************************************/
 Position gamePosition;		// Position we are going to use
@@ -23,6 +21,10 @@ char * agentName = "La Geo Stormers";		//default name.. change it! keep in mind 
 char * ip = "127.0.0.1";	// default ip (local machine)
 /**********************************************************/
 
+List *createList();
+void addToList(Move *move, List *list);
+ListNode *removeFromList(List *list);
+int isEmpty(List *list);
 
 int main( int argc, char ** argv ) {
 	int c;
@@ -87,49 +89,11 @@ int main( int argc, char ** argv ) {
 			case NM_REQUEST_MOVE:		//server requests our move
 				myMove.color = myColor;
 				
-				//if(!canMove( &gamePosition, myColor )) // no moves available
-				//    myMove.tile[ 0 ][ 0 ] = -1;		//null move
-				//else // you can move
-                //    predictMove(&gamePosition, myColor);
+				if(!canMove( &gamePosition, myColor )) // no moves available
+				   myMove.tile[ 0 ][ 0 ] = -1;		//null move
+				else // you can move
+                   predictMove(&gamePosition, myColor);
 
-                /* ******************* TESTING IMPLEMENTATION OF LIST ********************/
-                List container;
-                memset(&container, 0, sizeof(container));
-                //We want to store Move structs
-                construct_List(&container, sizeof(Move), FREEOBJ);
-
-                // Inserting first move
-                Move firstMove;
-                firstMove.tile[0][0] = 1;
-                firstMove.tile[1][0] = 0;
-                firstMove.tile[0][1] = 2;
-                firstMove.tile[1][1] = 1;
-                firstMove.tile[0][2] = -1;
-                firstMove.color = WHITE;
-                push_back_List(&container, &firstMove, sizeof(firstMove), DYNAMIC);
-
-                // Inserting second move
-                Move secondMove;
-                firstMove.tile[0][0] = 2;
-                firstMove.tile[1][0] = 1;
-                firstMove.tile[0][1] = 3;
-                firstMove.tile[1][1] = 2;
-                firstMove.tile[0][2] = -1;
-                firstMove.color = WHITE;
-                 push_back_List(&container, &secondMove, sizeof(firstMove), DYNAMIC);
-
-                // Prinf info about first two moves
-                ListIter* iterator = create_ListIter(&container);
-                if (!empty_List(iterator)){
-                    head_ListIter(iterator);
-                    do {
-                        Move *iterMove = (Move*)retrieve_ListIter(iterator);
-                        printf("%d %d %d %d %d\n", iterMove->tile[0][0], iterMove->tile[1][0], iterMove->tile[0][1], iterMove->tile[1][1], iterMove->tile[2][0]);
-                    } while(!next_ListIter(iterator));
-                }
-
-                /* ******************* END OF TESTING ********************/
-                
 				sendMove( &myMove, mySocket );			//send our move
 				break;
 			case NM_QUIT:			//server wants us to quit...we shall obey
@@ -145,7 +109,7 @@ int main( int argc, char ** argv ) {
 	return 0;
 }
 
-/*
+
 
 void predictMove(){
 
@@ -290,3 +254,50 @@ void findPossibleMoves(Position *gamePosition, Move *possibleMoves, int ants[2][
 }
 
 */
+// List related functions
+
+List *createList(){
+    List *list = (List *)malloc(sizeof(List));
+    list->front = list->rear = NULL;
+    list->length = 0;
+    return list;
+}
+
+void addToList(Move *move, List *list){
+    ListNode *temp = (ListNode *)malloc(sizeof(ListNode));
+    temp->data = move;
+    temp->next = NULL;
+
+    if(list->rear == NULL){
+        list->front = temp;
+        list->rear = temp;
+        list->length++;
+        return;
+    }
+
+    //Add the new node at the end of list and change rear
+    list->rear->next = temp;
+    list->rear = temp;
+    list->length++;
+}
+
+ListNode *removeFromList(List *list){
+    if(isEmpty(list))
+        return;
+    //Store previous front and move front one node ahead
+    ListNode *temp = list->front;
+    list->front = list->front->next;
+    list->length--;
+    return(temp);
+}
+
+int isEmpty(List *list){
+    return (list->rear == NULL) ? TRUE : FALSE;
+}
+
+void printNode(ListNode *listNode){
+    for (int i = 0; i < MAXIMUM_MOVE_SIZE; i++){
+        printf("(%d,%d)", listNode->data->tile[0][i], listNode->data->tile[1][i]);
+        printf(i == MAXIMUM_MOVE_SIZE - 1 ? "\n" : ", ");
+    }
+}

@@ -118,3 +118,52 @@ void test(){
 
 }
 */
+
+/*
+/* ******************* TESTING IMPLEMENTATION OF LIST ******************
+                //We want to store Move structs
+                List *list = createList();
+                //construct_List(&container, sizeof(Move), FREEOBJ);
+
+                // Inserting first move
+                Move firstMove;
+                firstMove.tile[0][0] = 1;
+                firstMove.tile[1][0] = 0;
+                firstMove.tile[0][1] = 2;
+                firstMove.tile[1][1] = 1;
+                firstMove.tile[0][2] = -1;
+                firstMove.color = WHITE;
+
+                addToList(&firstMove, list);
+                // Inserting second move
+                Move secondMove;
+                secondMove.tile[0][0] = 2;
+                secondMove.tile[1][0] = 1;
+                secondMove.tile[0][1] = 3;
+                secondMove.tile[1][1] = 2;
+                secondMove.tile[0][2] = -1;
+                secondMove.color = WHITE;
+                addToList(&secondMove, list);
+
+                Move thirdMove;
+                thirdMove.tile[0][0] = 7;
+                thirdMove.tile[1][0] = 6;
+                thirdMove.tile[0][1] = 5;
+                thirdMove.tile[1][1] = 4;
+                thirdMove.tile[0][2] = -1;
+                thirdMove.color = WHITE;
+                addToList(&thirdMove, list);
+
+                removeFromList(list);
+
+                // Print info about first two moves
+                if (!isEmpty(list)){
+                    ListNode *temp = (ListNode *)malloc(sizeof(ListNode));
+                    temp = list->front;while(temp != NULL){
+                        printNode(temp);
+                        temp = temp->next;
+                    }
+                }
+
+                /* ******************* END OF TESTING *******************
+*/
