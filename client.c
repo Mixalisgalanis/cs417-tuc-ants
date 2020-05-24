@@ -170,41 +170,50 @@ void findPossibleMoves(Position *gamePosition, Move *possibleMoves, int ants[2][
 			int jumpInfo = canJump( i, j, color, &gamePosition);
 			if(jumpInfo != 0){
 				jumpPossible = TRUE;
-				int k = 1;
-                while( jumpInfo != 0 )
-                {
-					myMove.tile[ 0 ][ k ] = i + 2 * playerDirection;
-					if( jumpInfo == 3){ // both jumps available
+				int k = 0;
+                List myList, newList;
+                construct_List(&myList, sizeof(Move), FREEOBJ);
+                construct_List(&newList, sizeof(Move), FREEOBJ);
+                myMove.tiles[0][0] = i;
+                myMove.tiles[1][0] = j;
+                push_back_List(&newList, &myMove, sizeof(myMove), DYNAMIC);
+                while ( isEmpty(newList)){
+                    while( !isEmpty(myList) )
+                    {
+                        myMove = getNode(myList);
+                        jumpInfo = canJump(myMove.tiles[0][k], myMove.tiles[1][k], color, &gamePosition);
+                        if( jumpInfo == 3){ // both jumps available
 
-						Move myMove2;
-						//memcpy(myMove2, myMove, sizeof(Move));
-						myMove.tile[ 1 ][ k ] = j - 2;
-						myMove2.tile[ 1 ][ k ] = j + 2;
-					}
-					else if( jumpInfo == 1){ // left jump available
-						myMove.tile[ 1 ][ k ] = j - 2;
-					}
-					else if ( jumpInfo == 2){ // right jump available
-						myMove.tile[ 1 ][ k ] = j + 2;
-					}
+                            Move myMove2;
+                            memcpy(myMove2, myMove, sizeof(Move));
+                            myMove.tile[ 0 ][ k ] = i + 2 * playerDirection;
+                            myMove.tile[ 1 ][ k ] = j - 2;
+                            myMove2.tile[ 1 ][ k ] = j + 2;
+                            push_back_List(&newList, &myMove, sizeof(myMove), DYNAMIC);
+                            push_back_List(&newList, &myMove2, sizeof(myMove2), DYNAMIC);
+                        }
+                        else if( jumpInfo == 1){ // left jump available
+                            myMove.tile[ 0 ][ k ] = i + 2 * playerDirection;
+                            myMove.tile[ 1 ][ k ] = j - 2;
+                            push_back_List(&newList, &myMove, sizeof(firstMove), DYNAMIC);
+                        }
+                        else if ( jumpInfo == 2){ // right jump available
+                            myMove.tile[ 0 ][ k ] = i + 2 * playerDirection;
+                            myMove.tile[ 1 ][ k ] = j + 2;
+                            push_back_List(&newList, &myMove, sizeof(firstMove), DYNAMIC);
+                        }
+                        else if( jumpInfo == 0){
+                            possbileMoves.add(myMove);
+                        }
 
-					
-                    if( k + 1 == MAXIMUM_MOVE_SIZE )	//maximum tiles reached
-                        break;
-                    
-                    myMove.tile[ 0 ][ k + 1 ] = -1;		//maximum tiles not reached
-
-                    i = myMove.tile[ 0 ][ k ];		//we will try to jump from this point in the next loop
-                    j = myMove.tile[ 1 ][ k ];
-
-
+                    }
                     k++;
-                    //myList = newList;
+                    myList = newList;
                     if( k == MAXIMUM_MOVE_SIZE )	//maximum tiles reached
                         break;
                 }	
                 // Ara h myList periexei ola ta possible moves (ektws apo ta filla pou vrethikan nwritera kai ta exoume idi prosthesei sto possbileMoves)
-                //possibleMoves.add(myList);
+                possibleMoves.add(myList);
 			}
                   
         }
