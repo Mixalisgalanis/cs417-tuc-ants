@@ -110,7 +110,6 @@ int main( int argc, char ** argv ) {
 }
 
 
-
 void predictMove(){
 
 
@@ -178,7 +177,7 @@ void findPossibleMoves(Position *gamePosition, Move *possibleMoves, int ants[2][
 					if( jumpInfo == 3){ // both jumps available
 
 						Move myMove2;
-						memcpy(myMove2, myMove, sizeof(Move));
+						//memcpy(myMove2, myMove, sizeof(Move));
 						myMove.tile[ 1 ][ k ] = j - 2;
 						myMove2.tile[ 1 ][ k ] = j + 2;
 					}
@@ -200,11 +199,14 @@ void findPossibleMoves(Position *gamePosition, Move *possibleMoves, int ants[2][
 
 
                     k++;
-					jumpInfo = canJump( i, j, myColor, &gamePosition );
-                }
+                    //myList = newList;
+                    if( k == MAXIMUM_MOVE_SIZE )	//maximum tiles reached
+                        break;
+                }	
+                // Ara h myList periexei ola ta possible moves (ektws apo ta filla pou vrethikan nwritera kai ta exoume idi prosthesei sto possbileMoves)
+                //possibleMoves.add(myList);
 			}
-                
-                
+                  
         }
     }
 
@@ -253,7 +255,6 @@ void findPossibleMoves(Position *gamePosition, Move *possibleMoves, int ants[2][
 	
 }
 
-*/
 // List related functions
 
 List *createList(){
