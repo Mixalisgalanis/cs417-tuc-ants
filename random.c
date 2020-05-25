@@ -120,6 +120,19 @@ void test(){
 */
 
 /*
+
+
+
+    //*********************************************************
+    // used in random
+    srand(time(NULL));
+    int i, j, k;
+    int jumpPossible;
+    int playerDirection;
+    //*********************************************************
+
+
+
                 // ******************* TESTING IMPLEMENTATION OF LIST ******************
                 //We want to store Move structs
                 List *list = createList();

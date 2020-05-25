@@ -20,7 +20,8 @@ char *ip = "127.0.0.1";                 // default ip (localhost)
 
 // ======================== Functions Definitions =========================
 
-void minimax(Position *position, int depth);
+int minimax(Position *position, Move *move, int depth, int maximizingPlayer);
+int calculateCost(Position *position, Move *move, char color);
 void findAnts(Position *position, int ants[2][MAX_ANTS], char color);
 void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_ANTS], char color);
 void buildMove(Position *position, List *possibleMoves, char color, int vDir, int hDir, int i, int j);
@@ -66,14 +67,6 @@ int main(int argc, char **argv)
 
     char msg;
 
-    /**********************************************************/
-    // used in random
-    srand(time(NULL));
-    int i, j, k;
-    int jumpPossible;
-    int playerDirection;
-    /**********************************************************/
-
     while (1)
     {
 
@@ -98,14 +91,13 @@ int main(int argc, char **argv)
         case NM_REQUEST_MOVE: //server requests our move
             myMove.color = myColor;
 
-            if (!canMove(&gamePosition, myColor)) // no moves available
+            if (!canMove(&myMove, myColor)) // no moves available
                myMove.tile[0][0] = -1;           //null move
             else
             { // you can move
 
-                Position predictedPosition;
-                memcpy(&predictedPosition, &gamePosition, sizeof(gamePosition));
-                minimax(&predictedPosition, 1);
+                int maximizingPlayer = (myColor == WHITE) ? TRUE : FALSE;
+                printf("%d", minimax(&gamePosition, NULL, 1, maximizingPlayer));
             }
 
             sendMove(&myMove, mySocket); //send our move
@@ -124,36 +116,77 @@ int main(int argc, char **argv)
 
 // ==================== Algorithm - Related Functions  ====================
 
-void minimax(Position *position, int depth)
+int minimax(Position *position, Move *move, int depth, int maximizingPlayer)
 {
-    if (depth == 0) return;
+    if (depth == 0) return calculateCost(position, move, (maximizingPlayer) ? WHITE : BLACK);
 
     //printf((myColor == WHITE) ? "I AM WHITE!\n" : "I AM BLACK\n");
-    if (myColor == WHITE)
-    { // WHITE -> MAXIMIZING PLAYER
+    if (maximizingPlayer) { // WHITE -> MAXIMIZING PLAYER
         int maxEvaluation = -INFINITY;
 
         int ants[2][MAX_ANTS];
-        findAnts(position, ants, WHITE);
+        findAnts(&gamePosition, ants, WHITE);
         //printAnts(ants);
 
         List *possible_moves = createList();
-        findPossibleMoves(position, possible_moves, ants, WHITE);
+        findPossibleMoves(&gamePosition, possible_moves, ants, WHITE);
         //printList(possible_moves);
 
+        ListNode *temp_move = possible_moves->front;
+        while (temp_move != NULL){
+            // Duplicate board and apply temp_move to the board
+            Position temp_position = *position;
+            doMove(&temp_position, temp_move);
+            // Calculate evaluation cost
+            int evaluation = minimax(&temp_position, temp_move->data, depth - 1, FALSE);
+            maxEvaluation = max(maxEvaluation, evaluation);
+            temp_move = temp_move->next;
+        }
 
-    }
-    else {  // BLACK -> MINIMIZING PLAYER
-        int maxEvaluation = INFINITY;
+    } else {  // BLACK -> MINIMIZING PLAYER
+        int minEvaluation = INFINITY;
 
         int ants[2][MAX_ANTS];
-        findAnts(position, ants, BLACK);
+        findAnts(&gamePosition, ants, BLACK);
         //printAnts(ants);
 
         List *possible_moves = createList();
-        findPossibleMoves(position, possible_moves, ants, BLACK);
+        findPossibleMoves(&gamePosition, possible_moves, ants, BLACK);
         //printList(possible_moves);
+
+        ListNode *temp_move = possible_moves->front;
+        while (temp_move != NULL){
+            // Duplicate board and apply temp_move to the board
+            Position temp_position = *position;
+            doMove(&temp_position, temp_move);
+            // Calculate evaluation cost
+            int evaluation = minimax(&temp_position, temp_move->data, depth - 1, TRUE);
+            minEvaluation = min(minEvaluation, evaluation);
+            temp_move = temp_move->next;
+        }
     }
+}
+
+int calculateCost(Position *position, Move *move, char color){
+    int MULTIPLIER = (color == WHITE) ? 1 : -1;
+
+    int cost = 0;
+    for (int move_counter = 0; move_counter < MAXIMUM_MOVE_SIZE; move_counter++){
+        if (move->tile[0][move_counter] == -1) break;
+        int i = move->tile[0][move_counter];
+        int j = move->tile[1][move_counter];
+        char cell = position->board[i][j];
+
+        if (move_counter != 0)
+            cost += WHITE_KILLED_ANT * MULTIPLIER; // Jumped
+        if (cell == FOOD_CELL)
+            cost += (WHITE_INCREASED_SCORE / 2) * MULTIPLIER;
+        if (color == WHITE && move->tile[0][move_counter] == BOARD_ROWS - 1)
+            cost += (WHITE_INCREASED_SCORE + WHITE_LOST_ANT) * MULTIPLIER;
+        else if (color == BLACK && move->tile[0][move_counter] == 0)
+            cost += (WHITE_INCREASED_SCORE + WHITE_LOST_ANT) * MULTIPLIER;
+    }
+    return cost;
 }
 
 void findAnts(Position *position, int ants[2][MAX_ANTS], char color)

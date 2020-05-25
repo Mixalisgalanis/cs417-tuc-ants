@@ -23,6 +23,9 @@
 #define TRUE 1
 #endif
 
+#define max(x,y) ((x) >= (y)) ? (x) : (y)
+#define min(x,y) ((x) <= (y)) ? (x) : (y)
+
 /**********************************************************/
 #define MAXIMUM_MOVE_SIZE 6
 #define MAX_ANTS 12
@@ -48,4 +51,14 @@
 //define infinity numbers
 #define INFINITY 2147483647
 
+//define minimax static evaluation scores
+#define WHITE_KILLED_ANT 1
+#define WHITE_LOST_ANT -1
+#define WHITE_INCREASED_SCORE 3
+
+//define cell types
+#define WHITE_CELL 0
+#define BLACK_CELL 1
+#define EMPTY_CELL 2
+#define FOOD_CELL 3
 #endif
