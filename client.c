@@ -118,20 +118,24 @@ int main(int argc, char **argv)
 
 int minimax(Position *position, Move *move, int depth, int maximizingPlayer)
 {
+    printf("Checkpoint 1\n");
     if (depth == 0) return calculateCost(position, move, (maximizingPlayer) ? WHITE : BLACK);
-
+    printf("Checkpoint 2\n");
     //printf((myColor == WHITE) ? "I AM WHITE!\n" : "I AM BLACK\n");
     if (maximizingPlayer) { // WHITE -> MAXIMIZING PLAYER
+        printf("Checkpoint 3\n");
         int maxEvaluation = -INFINITY;
 
         int ants[2][MAX_ANTS];
+        printf("Checkpoint 4\n");
         findAnts(&gamePosition, ants, WHITE);
         //printAnts(ants);
-
+        printf("WHITE IS PLAYING");
         List *possible_moves = createList();
         findPossibleMoves(&gamePosition, possible_moves, ants, WHITE);
         //printList(possible_moves);
-
+        printf("possible moves:");
+        printList(possible_moves);
         ListNode *temp_move = possible_moves->front;
         while (temp_move != NULL){
             // Duplicate board and apply temp_move to the board
@@ -149,7 +153,7 @@ int minimax(Position *position, Move *move, int depth, int maximizingPlayer)
         int ants[2][MAX_ANTS];
         findAnts(&gamePosition, ants, BLACK);
         //printAnts(ants);
-
+        printf("BLACK IS PLAYING");
         List *possible_moves = createList();
         findPossibleMoves(&gamePosition, possible_moves, ants, BLACK);
         //printList(possible_moves);
@@ -206,9 +210,12 @@ void findAnts(Position *position, int ants[2][MAX_ANTS], char color)
             }
         }
     }
-    if (counter < MAX_ANTS)
-        ants[0][counter + 1] = -1;
+    printf("%d\n",counter);
+    if (counter < MAX_ANTS){
+        ants[0][counter] = -1;
+        printf("Checkpoint 6\n");}
     //*(ants + counter + 1) = -1; //set next ant position to -1
+    printf("Checkpoint 7\n");
 }
 
 void printAnts(int ants[2][MAX_ANTS]){
@@ -220,7 +227,7 @@ void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_
 {
     int playerDirection = (color == WHITE) ? 1 : -1;
     int jumpPossible = FALSE;
-
+    printf("HEY");
     for (int counter = 0; counter < MAX_ANTS; counter++)
     {
         if (ants[0][counter] != -1)
@@ -236,49 +243,53 @@ void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_
                 int k = 0;
                 List *oldList = createList();
                 List *newList = createList();
-
-                myMove.tile[0][0] = i;
-                myMove.tile[1][0] = j;
-                addItemToList(newList, &myMove);
+                printf("jumpInfo: %d", jumpInfo);
+                Move* tempMove = (Move*)malloc(sizeof(Move));
+                tempMove->tile[0][0] = i;
+                tempMove->tile[1][0] = j;
+                addItemToList(oldList, &tempMove);
                 while (isEmpty(newList))
                 {
                     while (!isEmpty(oldList))
                     {
-                        myMove = *removeFromList(oldList)->data;
-                        jumpInfo = canJump(myMove.tile[0][k], myMove.tile[1][k], color, position);
+                        
+                        tempMove = removeFromList(oldList)->data;
+                        jumpInfo = canJump(tempMove->tile[0][k], tempMove->tile[1][k], color, position);
                         if (jumpInfo == 3)
                         { // both jumps available
 
-                            Move myMove2;
-                            memcpy(&myMove2, &myMove, sizeof(Move));
-                            myMove.tile[0][k] = i + 2 * playerDirection;
-                            myMove.tile[1][k] = j - 2;
-                            myMove2.tile[1][k] = j + 2;
-                            if (isLegal(position, &myMove))
-                                addItemToList(newList, &myMove);
-                            if (isLegal(position, &myMove2))
-                                addItemToList(newList, &myMove2);
+                            Move* myMove2 = (Move*)malloc(sizeof(Move));
+                            myMove2 = tempMove;
+                            tempMove->tile[0][k] = i + 2 * playerDirection;
+                            tempMove->tile[1][k] = j - 2;
+                            myMove2->tile[1][k] = j + 2;
+                            if (isLegal(position, tempMove))
+                                addItemToList(newList, tempMove);
+                            if (isLegal(position, myMove2))
+                                addItemToList(newList, myMove2);
                         }
                         else if (jumpInfo == 1)
                         { // left jump available
-                            myMove.tile[0][k] = i + 2 * playerDirection;
-                            myMove.tile[1][k] = j - 2;
-                            if (isLegal(position, &myMove))
-                                addItemToList(newList, &myMove);
+                            tempMove->tile[0][k] = i + 2 * playerDirection;
+                            tempMove->tile[1][k] = j - 2;
+                            if (isLegal(position, tempMove))
+                                addItemToList(newList, tempMove);
                         }
                         else if (jumpInfo == 2)
                         { // right jump available
-                            myMove.tile[0][k] = i + 2 * playerDirection;
-                            myMove.tile[1][k] = j + 2;
-                            if (isLegal(position, &myMove))
-                                addItemToList(newList, &myMove);
+                            tempMove->tile[0][k] = i + 2 * playerDirection;
+                            tempMove->tile[1][k] = j + 2;
+                            if (isLegal(position, tempMove)){
+                                printf("mpika");
+                                addItemToList(newList, tempMove);
+                            }
                         }
                         else if (jumpInfo == 0)
                         {
                             if (k < MAXIMUM_MOVE_SIZE)
-                                myMove.tile[0][k] = -1;
-                            if (isLegal(position, &myMove))
-                                addItemToList(possibleMoves, &myMove);
+                                tempMove->tile[0][k] = -1;
+                            if (isLegal(position, tempMove))
+                                addItemToList(possibleMoves, tempMove);
                         }
                     }
                     k++;
@@ -290,8 +301,11 @@ void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_
             }
         }
     }
+    printf("POSSIBLE MOVES: \n");
+    printList(possibleMoves);
+    printf("My color is %d \n" ,color);
 
-    //printf(jumpPossible ? "AT LEAST ONE JUMP IS AVAILABLE\n" : "NO JUMPS ARE AVAILABLE\n");
+    printf(jumpPossible ? "AT LEAST ONE JUMP IS AVAILABLE\n" : "NO JUMPS ARE AVAILABLE\n");
 
     if (!jumpPossible) {
         for (int counter = 0; counter < MAX_ANTS; counter++) {
@@ -304,6 +318,7 @@ void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_
             }
         }
     }
+    printf("END \n");
 }
 
 void buildMove(Position *position, List *possibleMoves, char color, int vDir, int hDir, int i, int j){ //hDir (left:0, right:1)
