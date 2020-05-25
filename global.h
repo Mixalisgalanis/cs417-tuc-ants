@@ -23,12 +23,13 @@
 #define TRUE 1
 #endif
 
-#define max(x,y) ((x) >= (y)) ? (x) : (y)
-#define min(x,y) ((x) <= (y)) ? (x) : (y)
+//#define max(x,y) ((x) >= (y)) ? (x) : (y)
+//#define min(x,y) ((x) <= (y)) ? (x) : (y)
 
 /**********************************************************/
 #define MAXIMUM_MOVE_SIZE 6
 #define MAX_ANTS 12
+#define MAX_JUMPS 5
 
 /* The size of our board */
 #define BOARD_COLUMNS 8
@@ -61,4 +62,9 @@
 #define BLACK_CELL 1
 #define EMPTY_CELL 2
 #define FOOD_CELL 3
+
+//define verbose levels
+#define VERBOSE_OFF 0
+#define VERBOSE_BASIC 1
+#define VERBOSE_EXTENDED 2
 #endif
