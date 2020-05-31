@@ -1,18 +1,17 @@
 #ifndef _GLOBAL_H
 #define _GLOBAL_H
 
-
 //#define _DEBUG_		//comment this line when you are done
 
 #ifdef _DEBUG_
-    #include <assert.h>
+#include <assert.h>
 #else
-    #define assert(p) {}
+#define assert(p) \
+    {}
 #endif
 
-
 #ifndef getOtherSide
-	#define getOtherSide( a ) ( 1-(a) )
+#define getOtherSide(a) (1 - (a))
 #endif
 
 #ifndef FALSE
@@ -53,9 +52,9 @@
 #define INFINITY 2147483647
 
 //define minimax static evaluation scores
-#define WHITE_KILLED_ANT 1
-#define WHITE_LOST_ANT -1
-#define WHITE_INCREASED_SCORE 3
+#define WHITE_KILLED_ANT 2
+#define WHITE_LOST_ANT -2
+#define WHITE_INCREASED_SCORE 5
 
 //define cell types
 #define WHITE_CELL 0

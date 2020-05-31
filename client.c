@@ -21,10 +21,11 @@ char *ip = "127.0.0.1";                 // default ip (localhost)
 
 // ======================== Functions Definitions =========================
 
-int minimax(Position *position, Move *move, int depth, int maximizingPlayer, int verbose);
-int calculateCost(Position *position, Move *move, char color, int verbose);
-void findAnts(Position *position, int ants[2][MAX_ANTS], char color, int verbose);
+float minimax(Position *curr_position, Position *prev_position, Move *move, int depth, int maximizingPlayer, int verbose);
+float calculateCost(Position *position, Move *move, char color, int verbose);
+int findAnts(Position *position, int ants[2][MAX_ANTS], char color, int verbose);
 void printAnts(int ants[2][MAX_ANTS]);
+void printMove(Move *move);
 void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_ANTS], char color, int verbose);
 void buildMove(Position *position, List *possibleMoves, char color, int vDir, int hDir, int i, int j, int verbose);
 
@@ -34,8 +35,11 @@ void printList(List *list);
 void addItemsToList(List *list, List *items);
 ListNode *removeFromList(List *list);
 int isEmpty(List *list);
-void printNode(ListNode *listNode);
 void clearList(List *list);
+
+const char *getColor(char color);
+int getPlayerColor(int maximizingPlayer);
+const char *getColorPlayerType(int maximizingPlayer);
 
 // ================================= ΜΑΙΝ =================================
 
@@ -90,10 +94,11 @@ int main(int argc, char **argv) {
                 myMove.color = myColor;
 
                 if (!canMove(&gamePosition, myColor))    // no moves available
-                    myMove.tile[0][0] = -1;        //null move
-                else {                             // you can move
+                    myMove.tile[0][0] = -1;              //null move
+                else {                                   // you can move
                     int maximizingPlayer = (myColor == WHITE) ? TRUE : FALSE;
-                    printf("%d", minimax(&gamePosition, NULL, 1, maximizingPlayer, VERBOSE_OFF));
+                    int verboseLevel = VERBOSE_OFF;
+                    printf("%.1f", minimax(&gamePosition, NULL, NULL, 4, maximizingPlayer, verboseLevel));
                 }
 
                 sendMove(&myMove, mySocket);    //send our move
@@ -112,123 +117,156 @@ int main(int argc, char **argv) {
 
 // ==================== Algorithm - Related Functions  ====================
 
-int minimax(Position *position, Move *move, int depth, int maximizingPlayer, int verbose) {
-    if (verbose == VERBOSE_EXTENDED) printf("FUNCTION [minimax] CALLED!\n");
-    if (depth == 0) {
-        return calculateCost(position, move, (maximizingPlayer) ? WHITE : BLACK, verbose);
-    }
-    if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) printf("MY TYRN!\n");
+float minimax(Position *curr_position, Position *prev_position, Move *move, int depth, int maximizingPlayer, int verbose) {
+    if (verbose == VERBOSE_EXTENDED) printf("[minimax][D:%d] Ι ΑΜ: %s, EXAMINING: %s\n", depth, getColor(myColor), getColorPlayerType(maximizingPlayer));
+    if (depth == 0) return calculateCost(prev_position, move, getPlayerColor(maximizingPlayer), verbose);
     if (maximizingPlayer) {    // WHITE -> MAXIMIZING PLAYER
-        int maxEvaluation = -INFINITY;
+        float maxEvaluation = -INFINITY;
         ListNode *maxEvaluationNode;
 
         int ants[2][MAX_ANTS];
-        findAnts(&gamePosition, ants, WHITE, verbose);
+        int foundAnts = findAnts(curr_position, ants, WHITE, VERBOSE_OFF);
+
+        if (!foundAnts) {
+            //if (verbose == VERBOSE_EXTENDED) printf("[D:%d] Did not find any ants! No moves available! Returning cost: %.1f\n", depth, -maxEvaluation);
+            return -maxEvaluation;
+        }
 
         List *possible_moves = createList();
-        findPossibleMoves(&gamePosition, possible_moves, ants, WHITE, verbose);
-        assert(!isEmpty(possible_moves));
-        if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) printList(possible_moves);
-        
+        findPossibleMoves(curr_position, possible_moves, ants, WHITE, VERBOSE_OFF);
+        //if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) printList(possible_moves);
+
+        if (isEmpty(possible_moves)) {
+            //if (verbose == VERBOSE_EXTENDED) printf("[D:%d] Found ants but no moves available! Returning cost: %.1f\n", depth, -maxEvaluation);
+            return -maxEvaluation;
+        }
+
         ListNode *temp_move = possible_moves->front;
         while (temp_move != NULL) {
             // Duplicate board and apply temp_move to the board
-            Position temp_position = *position;
-            doMove(&temp_position, temp_move->data);
+            Position temp_prev = *curr_position;
+            Position temp_curr = temp_prev;
+            doMove(&temp_curr, temp_move->data);
             // Calculate evaluation cost
-            int evaluation = minimax(&temp_position, temp_move->data, depth - 1, FALSE, verbose);
-            if (evaluation > maxEvaluation){
+            float evaluation = minimax(&temp_curr, &temp_prev, temp_move->data, depth - 1, FALSE, verbose);
+            if (evaluation >= maxEvaluation) {
                 maxEvaluation = evaluation;
                 maxEvaluationNode = temp_move;
             }
             temp_move = temp_move->next;
         }
         if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) {
-            printf("MAX EVAL %d ACHIEVED WITH MOVE ", maxEvaluation);
-            printNode(maxEvaluationNode);
+            printf("[D:%d] BEST (MAX) MOVE (COST %.1f): ", depth, maxEvaluation);
+            printMove(maxEvaluationNode->data);
         }
         myMove = *maxEvaluationNode->data;
+        return maxEvaluation;
 
     } else {    // BLACK -> MINIMIZING PLAYER
-        int minEvaluation = INFINITY;
+        float minEvaluation = INFINITY;
         ListNode *minEvaluationNode;
 
         int ants[2][MAX_ANTS];
-        findAnts(&gamePosition, ants, BLACK, verbose);
+        int foundAnts = findAnts(curr_position, ants, BLACK, VERBOSE_OFF);
+
+        if (!foundAnts) {
+            //if (verbose == VERBOSE_EXTENDED) printf("[D:%d] Did not find any ants! No moves available! Returning cost: %.1f\n", depth, -minEvaluation);
+            return -minEvaluation;
+        }
 
         List *possible_moves = createList();
-        findPossibleMoves(&gamePosition, possible_moves, ants, BLACK, verbose);
-        assert(!isEmpty(possible_moves));
-        if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) printList(possible_moves);
+        findPossibleMoves(curr_position, possible_moves, ants, BLACK, VERBOSE_OFF);
+        //if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) printList(possible_moves);
+
+        if (isEmpty(possible_moves)) {
+            //if (verbose == VERBOSE_EXTENDED) printf("[D:%d] Found ants but no moves available! Returning cost: %.1f\n", depth, -minEvaluation);
+            return -minEvaluation;
+        }
 
         ListNode *temp_move = possible_moves->front;
         while (temp_move != NULL) {
             // Duplicate board and apply temp_move to the board
-            Position temp_position = *position;
-            doMove(&temp_position, temp_move->data);
+            Position temp_prev = *curr_position;
+            Position temp_curr = temp_prev;
+            doMove(&temp_curr, temp_move->data);
             // Calculate evaluation cost
-            int evaluation = minimax(&temp_position, temp_move->data, depth - 1, TRUE, verbose);
-            if (evaluation < minEvaluation){
+            float evaluation = minimax(&temp_curr, &temp_prev, temp_move->data, depth - 1, TRUE, verbose);
+            if (evaluation <= minEvaluation) {
                 minEvaluation = evaluation;
                 minEvaluationNode = temp_move;
             }
             temp_move = temp_move->next;
         }
 
-        if (verbose == VERBOSE_BASIC|| verbose == VERBOSE_EXTENDED) {
-            printf("MIN EVAL %d ACHIEVED WITH MOVE ", minEvaluation);
-            printNode(minEvaluationNode);
+        if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) {
+            printf("[D:%d] BEST (MIN) MOVE (COST %.1f): ", depth, minEvaluation);
+            printMove(minEvaluationNode->data);
         }
         myMove = *minEvaluationNode->data;
+        return minEvaluation;
     }
 }
 
-int calculateCost(Position *position, Move *move, char color, int verbose) {
-    if (verbose == VERBOSE_EXTENDED) printf("FUNCTION [calculateCost] CALLED!\n");
-    int MULTIPLIER = (color == WHITE) ? 1 : -1;
-    if (verbose == VERBOSE_EXTENDED) printf("MULTIPLIER = %d, ", MULTIPLIER);
+float calculateCost(Position *position, Move *move, char color, int verbose) {
+    //if (verbose == VERBOSE_EXTENDED) printf("FUNCTION [calculateCost] CALLED [D:0]!\n");
+    int MULTIPLIER = (color == BLACK) ? 1 : -1;
+    if (verbose == VERBOSE_EXTENDED) {
+        printf("[calculateCost] [D:0] %s", getColor(color));
+        printMove(move);
+        printf("MULTIPLIER = %d, ", MULTIPLIER);
+    }
 
-    int cost = 0;
-    for (int move_counter = 0; move_counter < MAXIMUM_MOVE_SIZE; move_counter++) {
+    float cost = 0;
+    for (int move_counter = 1; move_counter < MAXIMUM_MOVE_SIZE; move_counter++) {
         if (move->tile[0][move_counter] == -1) break;
         int i = move->tile[0][move_counter];
         int j = move->tile[1][move_counter];
         char cell = position->board[i][j];
-
-        if (move_counter != 0) // jump
+        if (abs(move->tile[0][move_counter] - move->tile[0][move_counter - 1]) == 2)    // jump
             cost += WHITE_KILLED_ANT * MULTIPLIER;
-        if (cell == FOOD_CELL) // food
-            cost += (WHITE_INCREASED_SCORE / 2) * MULTIPLIER;
-        if ((color == WHITE && move->tile[0][move_counter] == BOARD_ROWS - 1) || (color == BLACK && move->tile[0][move_counter] == 0)) // reached end
+        if (cell == FOOD_CELL)    // food
+            cost += (WHITE_INCREASED_SCORE / 5.0) * MULTIPLIER;
+        if ((color == BLACK && move->tile[0][move_counter] == BOARD_ROWS - 1) || (color == WHITE && move->tile[0][move_counter] == 0))    // reached end
             cost += (WHITE_INCREASED_SCORE + WHITE_LOST_ANT) * MULTIPLIER;
     }
-    if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) printf("Total cost = %d\n", cost);
+    if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) printf("Total cost = %.1f\n", cost);
     return cost;
 }
 
-void findAnts(Position *position, int ants[2][MAX_ANTS], char color, int verbose) {
-    if (verbose == VERBOSE_EXTENDED) printf("FUNCTION [findAnts] CALLED!\n");
+int findAnts(Position *position, int ants[2][MAX_ANTS], char color, int verbose) {
+    if (verbose == VERBOSE_EXTENDED) printf("FUNCTION [findAnts] CALLED!\nAnts: ");
     int counter = 0;
     for (int i = 0; i < BOARD_ROWS; i++) {
         for (int j = 0; j < BOARD_COLUMNS; j++) {
             if (position->board[i][j] == color) {
                 ants[0][counter] = i;
                 ants[1][counter] = j;
-                if (verbose == VERBOSE_EXTENDED) printf("Ant %d: (%d, %d)\n", counter, ants[0][counter], ants[1][counter]);
+                if (verbose == VERBOSE_EXTENDED) printf("(%d, %d) ", ants[0][counter], ants[1][counter]);
                 counter++;
             }
         }
     }
-    if (verbose == VERBOSE_BASIC || verbose == VERBOSE_EXTENDED) printf("Found %d ants!\n", counter);
     if (counter < MAX_ANTS) {
         ants[0][counter] = -1;
     }
+    if (verbose == VERBOSE_EXTENDED) printf("\n");
+    return (counter != 0) ? TRUE : FALSE;
 }
 
-void printAnts(int ants[2][MAX_ANTS]){
-    for (int i = 0; i < MAX_ANTS; i++){
+void printAnts(int ants[2][MAX_ANTS]) {
+    printf("Ants: ");
+    for (int i = 0; i < MAX_ANTS; i++) {
         if (ants[0][i] == -1) break;
-        printf("Ant %d: (%d, %d)\n", i, ants[0][i], ants[1][i]);
+        printf("(%d, %d) ", ants[0][i], ants[1][i]);
+    }
+    printf("\n");
+}
+
+void printMove(Move *move) {
+    printf("Move: ");
+    for (int i = 0; i < MAXIMUM_MOVE_SIZE; i++) {
+        printf("(%d,%d)", move->tile[0][i], move->tile[1][i]);
+        printf(i == MAXIMUM_MOVE_SIZE - 1 ? "\n" : "->");
     }
 }
 
@@ -271,7 +309,7 @@ void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_
                     tempMove->tile[0][k + 1] = tempMove->tile[0][k] + 2 * playerDirection;
                     tempMove->tile[1][k + 1] = tempMove->tile[1][k] - 2;
                     addItemToList(newList, tempMove);
-                } else if (jumpInfo == 2){
+                } else if (jumpInfo == 2) {
                     tempMove->tile[0][k + 1] = tempMove->tile[0][k] + 2 * playerDirection;
                     tempMove->tile[1][k + 1] = tempMove->tile[1][k] + 2;
                     addItemToList(newList, tempMove);
@@ -288,7 +326,7 @@ void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_
                 break;    //maximum tiles reached
         } while (!isEmpty(newList));
         ListNode *check_move = oldList->front;
-        while (check_move != NULL){
+        while (check_move != NULL) {
             if (isLegal(position, check_move->data))
                 addItemToList(possibleMoves, check_move->data);
             check_move = check_move->next;
@@ -302,16 +340,12 @@ void findPossibleMoves(Position *position, List *possibleMoves, int ants[2][MAX_
             if (ants[0][counter] != -1) {
                 int i = ants[0][counter];
                 int j = ants[1][counter];
-                
+
                 buildMove(position, possibleMoves, color, playerDirection, 0, i, j, verbose);
                 buildMove(position, possibleMoves, color, playerDirection, 1, i, j, verbose);
             }
         }
     }
-}
-
-void buildJump(Position *position, List *possibleMoves, char color){
-
 }
 
 void buildMove(Position *position, List *possibleMoves, char color, int vDir, int hDir, int i, int j, int verbose) {    //hDir (left:0, right:1)
@@ -358,7 +392,7 @@ void printList(List *list) {
     ListNode *temp = (ListNode *)malloc(sizeof(ListNode));
     temp = list->front;
     while (temp != NULL) {
-        printNode(temp);
+        printMove(temp->data);
         temp = temp->next;
     }
 }
@@ -368,8 +402,8 @@ void addItemsToList(List *list, List *items) {
         addItemToList(list, removeFromList(items)->data);
 }
 
-void clearList(List *list){
-    while(!isEmpty(list)){
+void clearList(List *list) {
+    while (!isEmpty(list)) {
         removeFromList(list);
     }
 }
@@ -389,9 +423,16 @@ int isEmpty(List *list) {
     return (list->rear == NULL) ? TRUE : FALSE;
 }
 
-void printNode(ListNode *listNode) {
-    for (int i = 0; i < MAXIMUM_MOVE_SIZE; i++) {
-        printf("(%d,%d)", listNode->data->tile[0][i], listNode->data->tile[1][i]);
-        printf(i == MAXIMUM_MOVE_SIZE - 1 ? "\n" : ", ");
-    }
+// ===================== Utility - Related Functions =====================
+
+const char *getColor(char color) {
+    return (color == WHITE) ? "White" : "Black";
+}
+
+int getPlayerColor(int maximizingPlayer) {
+    return (maximizingPlayer == 1) ? WHITE : BLACK;
+}
+
+const char *getColorPlayerType(int maximizingPlayer) {
+    return (getPlayerColor(maximizingPlayer) == WHITE) ? "White" : "Black";
 }
